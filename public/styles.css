@@ -1133,6 +1133,13 @@ main { padding-top: 18px; padding-bottom: 48px; }
 /* ---------- phone ---------- */
 
 @media (max-width: 760px) {
+  /* Safari on iOS 26 fills the strip under the status bar with one flat color taken from the page background, which
+     was white and cut the pink glow off under the clock. The page background becomes the glow's pink (body still
+     paints white, as an image so it doesn't count), and the page's top edge starts in that same pink. */
+  html:has(.glow) { background-color: #bf7382; }
+  html:has(.glow) body { background: linear-gradient(var(--page), var(--page)); }
+  .glow::after { content: ''; position: absolute; inset: 0 0 auto 0; height: 110px; background: linear-gradient(#bf7382 14px, rgba(191, 115, 130, 0)); }
+
   .topbar, main { padding-left: 16px; padding-right: 16px; }
   .banner { width: calc(100% - 32px); }
   .topbar { margin-top: 12px; height: 48px; gap: 10px; }
