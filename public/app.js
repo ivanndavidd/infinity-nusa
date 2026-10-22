@@ -621,6 +621,8 @@ function wire() {
     if (event.key === 'Escape') closePopovers();
   });
   window.addEventListener('scroll', hideTooltip, { passive: true });
+  // A tapped tooltip stays open until the next touch; a tap on another chart mark then opens that one's.
+  document.addEventListener('pointerdown', (event) => event.pointerType !== 'mouse' && hideTooltip(), true);
 
   for (const button of $$('.seg[data-mode]')) button.addEventListener('click', () => setMode(button.dataset.mode));
   $('#month-prev').append(icon('chevronLeft'));

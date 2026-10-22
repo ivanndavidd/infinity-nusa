@@ -177,10 +177,12 @@ export function emptyNote(text) {
   return el('p', { class: 'empty', text });
 }
 
-/** Hover tooltip on a node. */
+/** Tooltip on a node: follows the mouse, and opens on tap on a touch screen (app.js closes it on the next tap or scroll). */
 export function withTooltip(node, title, detail) {
-  node.addEventListener('mousemove', (e) => showTooltip(e, typeof title === 'function' ? title() : title, typeof detail === 'function' ? detail() : detail));
-  node.addEventListener('mouseleave', hideTooltip);
+  const show = (e) => showTooltip(e, typeof title === 'function' ? title() : title, typeof detail === 'function' ? detail() : detail);
+  node.addEventListener('pointermove', (e) => e.pointerType === 'mouse' && show(e));
+  node.addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && hideTooltip());
+  node.addEventListener('click', show);
   return node;
 }
 
