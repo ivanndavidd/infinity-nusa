@@ -135,7 +135,7 @@ button:disabled { cursor: default; }
 .wordmark {
   display: inline-flex;
   align-items: baseline;
-  font-size: 21px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1.1;
@@ -1148,7 +1148,7 @@ main { padding-top: 18px; padding-bottom: 48px; }
   .topbar, main { padding-left: 16px; padding-right: 16px; }
   .banner { width: calc(100% - 32px); }
   .topbar { margin-top: 12px; height: 48px; gap: 10px; }
-  .wordmark { font-size: 18px; }
+  .wordmark { font-size: 25px; }
   .top-actions { gap: 8px; }
   .pill { height: 34px; padding: 0 12px; font-size: 12.5px; }
   .top-actions .lang-switch { display: none; }
