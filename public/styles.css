@@ -1135,12 +1135,15 @@ main { padding-top: 18px; padding-bottom: 48px; }
 /* ---------- phone ---------- */
 
 @media (max-width: 760px) {
-  /* Safari on iOS 26 fills the strip under the status bar with one flat color taken from the page background, which
-     was white and cut the pink glow off under the clock. The page background becomes the glow's pink (body still
-     paints white, as an image so it doesn't count), and the page's top edge starts in that same pink. */
+  /* Safari on iOS 26 fills the strips under its status bar and toolbar with one flat color taken from the page
+     background, which was white and cut the glow off at the screen's edges. The page background becomes the glow's
+     color at those edges (body still paints white, as an image so it doesn't count), and the page's edges start in
+     that same flat color: the dashboard's pink at the top, the sign-in page's grey at the top and bottom. */
   html:has(.glow) { background-color: #bf7382; }
-  html:has(.glow) body { background: linear-gradient(var(--page), var(--page)); }
+  html:has(.login-glow) { background-color: #d5d5d5; }
+  html:has(.glow, .login-glow) body { background: linear-gradient(var(--page), var(--page)); }
   .glow::after { content: ''; position: absolute; inset: 0 0 auto 0; height: 110px; background: linear-gradient(#bf7382 14px, rgba(191, 115, 130, 0)); }
+  .login-glow::after { content: ''; position: absolute; inset: 0; background: linear-gradient(#d5d5d5 14px, rgba(213, 213, 213, 0) 110px), linear-gradient(0deg, #d5d5d5 14px, rgba(213, 213, 213, 0) 110px); }
   /* The strip under Safari's bottom toolbar takes the color of a fixed bar at the bottom edge, but only an opaque one:
      solid white keeps it white instead of the page's pink. */
   .tabbar { background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; }
