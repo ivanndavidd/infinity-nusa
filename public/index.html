@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>nusa.</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/PlusJakartaSans.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"><div class="grain"></div></div>
+
+  <header class="topbar">
+    <a class="wordmark" href="#/overview" aria-label="nusa. Overview"><span>n</span><span>u</span><span>s</span><span>a</span><span class="wm-dot">.</span></a>
+    <nav class="nav" aria-label="Pages">
+      <a href="#/overview" data-page="overview" data-i18n="navOverview">Overview</a>
+      <a href="#/transactions" data-page="transactions" data-i18n="navTransactions">Transactions</a>
+      <a href="#/categories" data-page="categories" data-i18n="navCategories">Categories</a>
+      <a href="#/budgets" data-page="budgets" data-i18n="navBudgets">Budgets</a>
+      <a href="#/email" data-page="email" data-i18n="navEmail">Email sync</a>
+    </nav>
+    <div class="top-actions">
+      <div class="pop-anchor">
+        <button id="period-btn" class="pill" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="period-pop">
+          <span id="period-label">…</span><span class="pill-chevron"></span>
+        </button>
+        <div id="period-pop" class="popover period-pop" hidden>
+          <div class="segmented" role="group">
+            <button class="seg" type="button" data-mode="month" data-i18n="periodMonth">Month</button>
+            <button class="seg" type="button" data-mode="range" data-i18n="periodRange">Date range</button>
+          </div>
+          <div id="month-panel">
+            <div class="month-step">
+              <button id="month-prev" class="icon-btn" type="button" data-i18n-label="prevMonth"></button>
+              <span id="month-year"></span>
+              <button id="month-next" class="icon-btn" type="button" data-i18n-label="nextMonth"></button>
+            </div>
+            <div id="month-list" class="month-list"></div>
+          </div>
+          <div id="range-panel" hidden>
+            <div class="range-fields">
+              <label class="field"><span data-i18n="from">From</span><input id="range-from" type="date" min="2000-01-01" max="2100-12-31"></label>
+              <label class="field"><span data-i18n="to">To</span><input id="range-to" type="date" min="2000-01-01" max="2100-12-31"></label>
+            </div>
+            <div class="chips">
+              <button class="chip" type="button" data-preset="7" data-i18n="p7">7 days</button>
+              <button class="chip" type="button" data-preset="30" data-i18n="p30">30 days</button>
+              <button class="chip" type="button" data-preset="90" data-i18n="p90">90 days</button>
+              <button class="chip" type="button" data-preset="ytd" data-i18n="pYtd">This year</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button id="lang-btn" class="lang-switch" type="button" data-lang="en"><span class="lang-code">EN</span><span class="lang-knob"></span></button>
+      <div class="pop-anchor">
+        <button id="avatar" class="avatar" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="account-pop">·</button>
+        <div id="account-pop" class="popover account-pop" hidden>
+          <p class="pop-caption" data-i18n="signedInAs">Signed in as</p>
+          <p id="account-email" class="pop-email"></p>
+          <button id="lang-btn-menu" class="menu-item" type="button"></button>
+          <button id="logout-btn" class="menu-item" type="button" data-i18n="signOut">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div id="sync-banner" class="banner" role="status" hidden></div>
+
+  <main id="main">
+    <section id="page-overview" class="page" data-page="overview"></section>
+    <section id="page-transactions" class="page" data-page="transactions" hidden></section>
+    <section id="page-categories" class="page" data-page="categories" hidden></section>
+    <section id="page-budgets" class="page" data-page="budgets" hidden></section>
+    <section id="page-email" class="page" data-page="email" hidden></section>
+  </main>
+
+  <nav class="tabbar" aria-label="Pages">
+    <a href="#/overview" data-page="overview"><span class="tab-icon" data-icon="grid"></span><span data-i18n="navOverview">Overview</span></a>
+    <a href="#/transactions" data-page="transactions"><span class="tab-icon" data-icon="list"></span><span data-i18n="navTransactions">Transactions</span></a>
+    <a href="#/categories" data-page="categories"><span class="tab-icon" data-icon="tag"></span><span data-i18n="navCategories">Categories</span></a>
+    <a href="#/budgets" data-page="budgets"><span class="tab-icon" data-icon="pie"></span><span data-i18n="navBudgets">Budgets</span></a>
+    <a href="#/email" data-page="email"><span class="tab-icon" data-icon="mail"></span><span data-i18n="navEmail">Email sync</span></a>
+  </nav>
+
+  <dialog id="email-dialog" class="dialog">
+    <div class="dialog-head">
+      <h2 id="email-dialog-title"></h2>
+      <button id="email-dialog-close" class="icon-btn" type="button" data-i18n-label="close"></button>
+    </div>
+    <p id="email-dialog-meta" class="muted small"></p>
+    <pre id="email-dialog-body" class="email-body"></pre>
+  </dialog>
+
+  <dialog id="form-dialog" class="dialog dialog-form"></dialog>
+
+  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

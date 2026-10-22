@@ -1,0 +1,9 @@
+[Unit]
+Description=Install the latest nusa. version from GitHub
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment=NUSA_REPO=ivanndavidd/infinity-nusa
+ExecStart=/usr/local/sbin/nusa-pull-deploy

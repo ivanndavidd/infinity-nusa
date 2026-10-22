@@ -1,0 +1,38 @@
+# CI: tests on every push and pull request.
+# CD: when main passes, the "deploy" branch is moved to that commit. The VM checks that branch every minute
+# (deploy/oracle/pull-deploy.sh) and installs new commits itself, so GitHub never needs a key to the server.
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Check the deploy scripts
+        run: for f in deploy/oracle/*.sh; do bash -n "$f"; done
+
+  release:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency: release
+    steps:
+      - uses: actions/checkout@v4
+      - name: Point the deploy branch at this commit
+        run: git push --force origin HEAD:refs/heads/deploy
