@@ -1141,6 +1141,9 @@ main { padding-top: 18px; padding-bottom: 48px; }
   html:has(.glow) { background-color: #bf7382; }
   html:has(.glow) body { background: linear-gradient(var(--page), var(--page)); }
   .glow::after { content: ''; position: absolute; inset: 0 0 auto 0; height: 110px; background: linear-gradient(#bf7382 14px, rgba(191, 115, 130, 0)); }
+  /* The strip under Safari's bottom toolbar takes the color of a fixed bar at the bottom edge, but only an opaque one:
+     solid white keeps it white instead of the page's pink. */
+  .tabbar { background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; }
 
   .topbar, main { padding-left: 16px; padding-right: 16px; }
   .banner { width: calc(100% - 32px); }
