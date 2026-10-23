@@ -8,22 +8,38 @@ import { categoryIcon, emptyNote, outlineButton, pageHead, pill, tile, tileHead,
 let data = null; // the last GET /api/forecast answer
 let loading = null; // the request in flight
 let pollTimer = null;
+let justLoaded = false; // the render that shows freshly loaded data needn't fetch them again
 const autoStarted = new Set(); // months whose AI run this visit already started on its own
 
 const onPage = (ctx) => ctx.state.page === 'forecast';
 const inLang = (pair) => (pair?.[getLang()] || pair?.en || '');
 
+/**
+ * Fetches the forecast. The first time, the page then draws with its entrance animation; on later visits the page
+ * is already drawn (and animating) from the data held, so it is redrawn only if something changed, without
+ * cutting the animation short for nothing.
+ */
 async function load(ctx) {
-  const first = !data;
+  const before = data && JSON.stringify(data);
   loading ??= api('/api/forecast').finally(() => (loading = null));
   data = await loading;
   // The first visit in a month asks the AI on its own; after that it waits for the refresh button.
   if (data.ai.configured && data.ai.status === 'none' && data.history.length && !autoStarted.has(data.baseline.month)) {
     autoStarted.add(data.baseline.month);
-    await start(ctx);
+    try {
+      data = await api('/api/forecast', { method: 'POST', body: '{}' });
+    } catch (err) {
+      ctx.showError(err);
+    }
   }
   poll(ctx);
-  if (onPage(ctx)) ctx.render({ animate: first });
+  if (!onPage(ctx)) return;
+  if (!before) {
+    justLoaded = true;
+    ctx.render({ animate: true });
+  } else if (JSON.stringify(data) !== before) {
+    ctx.render();
+  }
 }
 
 async function start(ctx) {
@@ -128,6 +144,7 @@ function chartTile(m, d) {
     if (b.kind === 'forecast' && f.high > f.low) {
       const cx = x + colW / 2;
       const whisker = svg('path', { d: `M${cx - 5} ${y(f.high)}H${cx + 5}M${cx} ${y(f.high)}V${y(f.low)}M${cx - 5} ${y(f.low)}H${cx + 5}`, class: 'fc-range' });
+      m.add((p) => whisker.setAttribute('opacity', p)); // fades in as the column grows into it
       root.append(whisker);
     }
     const label = svg('text', { x: i * slot + slot / 2, y: height + 14, 'text-anchor': 'middle', class: `col-label${b.kind === 'forecast' ? ' is-forecast' : ''}` });
@@ -311,7 +328,9 @@ function recurringTile(d) {
 }
 
 export function render(root, ctx, { animate }) {
-  if (animate || !data) load(ctx).catch(ctx.showError);
+  // Opening the page shows what is held right away and checks for news in the background.
+  if (!data || (animate && !justLoaded)) load(ctx).catch(ctx.showError);
+  justLoaded = false;
   const refresh = outlineButton(data?.ai.status === 'running' ? t('fcAnalysingShort') : t('fcRefresh'), () => start(ctx), {
     disabled: !data?.ai.configured || data.ai.status === 'running' || !data.history.length,
   });
