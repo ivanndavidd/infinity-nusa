@@ -57,6 +57,12 @@ export const config = {
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean),
   publicUrl: str('PUBLIC_URL').replace(/\/+$/, ''),
+  // The forecast page's AI analysis; without a key the page shows the statistical forecast only.
+  deepseek: {
+    apiKey: str('DEEPSEEK_API_KEY'),
+    model: str('DEEPSEEK_MODEL', 'deepseek-flash'),
+    baseUrl: str('DEEPSEEK_BASE_URL', 'https://api.deepseek.com').replace(/\/+$/, ''),
+  },
 };
 
 export const imapConfigured = Boolean(config.imap.user && config.imap.pass);

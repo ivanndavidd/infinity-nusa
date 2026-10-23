@@ -62,6 +62,10 @@ Create a database (`CREATE DATABASE spending;`), copy `.env.example` to `.env`, 
   Open one to see the text the app read. BCA formats vary, so if a kind of email keeps landing there,
   share that text (remove account numbers first) and the parser in `src/parser/` can be taught the format;
   then press **Re-read all emails** to apply it to everything already stored.
+- **Forecast tab**: next month's expected spending per category, from a weighted average of the last three
+  complete months, plus the payments that recur every month. With `DEEPSEEK_API_KEY` in `.env`, DeepSeek refines the
+  forecast, explains it, and suggests lifestyle changes. It runs once a month on its own (or on **Refresh forecast**)
+  and the answer is stored, so each run costs well under a cent.
 
 ## Keeping it running
 
@@ -107,6 +111,8 @@ check your IT policy before installing tunnelling software such as Tailscale on 
   address from `ALLOWED_EMAILS` (and restarting) locks it out immediately.
 - `REQUIRE_DKIM=true` drops emails whose BCA signature didn't verify, so a spoofed "BCA" email can't add fake
   transactions (works with Gmail, which records the DKIM result).
+- The AI forecast sends DeepSeek monthly totals per category, merchant names and your budgets; never account or
+  card numbers, email text or individual transactions. Leave `DEEPSEEK_API_KEY` empty to keep everything local.
 
 ## Development
 

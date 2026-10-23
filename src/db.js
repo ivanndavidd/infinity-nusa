@@ -81,6 +81,14 @@ CREATE TABLE IF NOT EXISTS custom_categories (
   name        TEXT PRIMARY KEY,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- The latest AI forecast for each month ('YYYY-MM'), so the model is asked again only on request.
+CREATE TABLE IF NOT EXISTS forecasts (
+  month       TEXT PRIMARY KEY,
+  model       TEXT NOT NULL,
+  result      JSONB NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 export async function migrate() {
@@ -399,6 +407,53 @@ export async function setBudgets({ total, categories }) {
     }
   });
   return getBudgets();
+}
+
+// ---------- forecast ----------
+
+const SPENDING = `NOT hidden AND currency = 'IDR' AND direction = 'debit'`;
+
+/** Spending per month and category, across all time. */
+export async function monthlyCategoryTotals() {
+  const { rows } = await pool.query(
+    `SELECT to_char(occurred_at AT TIME ZONE $1, 'YYYY-MM') AS month, category, sum(amount) AS total
+     FROM transactions WHERE ${SPENDING} GROUP BY 1, 2 ORDER BY 1, 2`,
+    [config.timezone],
+  );
+  return rows;
+}
+
+/** Spending per merchant and month since a date, with the merchant's usual category and day of the month. */
+export async function monthlyMerchantTotals(since) {
+  const { rows } = await pool.query(
+    `SELECT to_char(occurred_at AT TIME ZONE $1, 'YYYY-MM') AS month, min(merchant) AS merchant,
+            mode() WITHIN GROUP (ORDER BY category) AS category, sum(amount) AS total, count(*) AS count,
+            avg(extract(day FROM occurred_at AT TIME ZONE $1))::float AS day
+     FROM transactions
+     WHERE ${SPENDING} AND merchant IS NOT NULL AND occurred_at >= ($2::date::timestamp AT TIME ZONE $1)
+     GROUP BY 1, lower(merchant)`,
+    [config.timezone, since],
+  );
+  return rows;
+}
+
+/** The first day the mailbox has emails for ('YYYY-MM-DD'): the history starts there, not on the 1st. */
+export async function firstDataDay() {
+  const { rows } = await pool.query(`SELECT to_char(min(received_at AT TIME ZONE $1), 'YYYY-MM-DD') AS day FROM emails`, [config.timezone]);
+  return rows[0].day;
+}
+
+export async function getForecast(month) {
+  const { rows } = await pool.query('SELECT model, result, created_at FROM forecasts WHERE month = $1', [month]);
+  return rows[0] ?? null;
+}
+
+export async function saveForecast(month, model, result) {
+  await pool.query(
+    `INSERT INTO forecasts (month, model, result) VALUES ($1, $2, $3)
+     ON CONFLICT (month) DO UPDATE SET model = $2, result = $3, created_at = now()`,
+    [month, model, JSON.stringify(result)],
+  );
 }
 
 // ---------- review queue ----------

@@ -5,6 +5,7 @@ import { authEnabled, config, LOCAL_HOSTNAMES } from './config.js';
 import { authRouter, isPublicRequest, requireAuth } from './auth.js';
 import * as db from './db.js';
 import { DEFAULT_CATEGORIES } from './categorize.js';
+import * as forecast from './forecast.js';
 import { runSync, startSyncLoop, stopSyncLoop, syncStatus } from './mail-sync.js';
 import { parseBcaEmail } from './parser/index.js';
 import { htmlToLines, textToLines } from './parser/text.js';
@@ -215,6 +216,16 @@ app.put('/api/budgets', async (req, res) => {
     if (value) clean[category] = value;
   }
   res.json(await db.setBudgets({ total: budgetAmount(total, 'total'), categories: clean }));
+});
+
+app.get('/api/forecast', async (req, res) => {
+  res.json(await forecast.getForecast());
+});
+
+// Starts the AI analysis in the background; the page polls GET /api/forecast until it is ready.
+app.post('/api/forecast', async (req, res) => {
+  if (!forecast.aiConfigured()) throw new HttpError(503, 'Set DEEPSEEK_API_KEY in .env to turn on the AI forecast.');
+  res.status(202).json(await forecast.startForecast());
 });
 
 app.get('/api/emails', async (req, res) => {

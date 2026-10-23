@@ -12,7 +12,7 @@ ExecStart=/usr/bin/node src/server.js
 Restart=always
 RestartSec=5
 
-# The app only talks to PostgreSQL (local socket), Gmail and Google, and never writes files.
+# The app only talks to PostgreSQL (local socket), Gmail, Google and DeepSeek, and never writes files.
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true

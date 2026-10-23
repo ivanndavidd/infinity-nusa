@@ -9,9 +9,10 @@ import * as overview from './pages/overview.js';
 import * as transactions from './pages/transactions.js';
 import * as categories from './pages/categories.js';
 import * as budgets from './pages/budgets.js';
+import * as forecast from './pages/forecast.js';
 import * as email from './pages/email.js';
 
-const PAGES = { overview, transactions, categories, budgets, email };
+const PAGES = { overview, transactions, categories, budgets, forecast, email };
 
 // Categories that are money in or bookkeeping rather than spending; they never get a budget.
 const NON_SPENDING = new Set(['Income', 'Refund', 'Cash', 'Credit Card Bill', 'Uncategorized']);
@@ -541,6 +542,8 @@ async function route() {
   for (const link of $$('[data-page]')) {
     if (link.tagName === 'A') link.classList.toggle('is-active', link.dataset.page === state.page);
   }
+  // The forecast is always about next month, so the period picker has nothing to do there.
+  $('#period-btn').closest('.pop-anchor').hidden = state.page === 'forecast';
   window.scrollTo({ top: 0 });
   if (state.page === 'categories' && !state.rules) await loadRules().catch(showError);
   render({ animate: true });
