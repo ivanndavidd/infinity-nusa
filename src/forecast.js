@@ -4,7 +4,8 @@
 import { config } from './config.js';
 import * as db from './db.js';
 import {
-  baselineForecast, forecastMessages, monthlyHistory, parseModelJson, recurringPayments, sanitizeForecast, shiftMonth, topMerchants,
+  baselineForecast, dailyPlan, forecastAccuracy, forecastMessages, monthlyHistory, parseModelJson, recurringPayments, sanitizeForecast,
+  shiftMonth, topMerchants,
 } from './forecast-model.js';
 
 // Thinking mode can take a while; the page polls instead of waiting on one request (Cloudflare cuts those at 100 s).
@@ -30,6 +31,7 @@ async function gatherInput() {
   return {
     today,
     firstDay,
+    rows,
     history,
     baseline: baselineForecast(history, target),
     recurring: recurringPayments(merchantRows, today),
@@ -38,18 +40,27 @@ async function gatherInput() {
   };
 }
 
-/** The history, the statistical forecast, recurring payments and the stored AI forecast with its status. */
+/**
+ * The history, the statistical forecast, recurring payments, the stored AI forecast with its status, how past
+ * forecasts did against what was spent, and a daily spending limit for next month.
+ */
 export async function getForecast() {
   const input = await gatherInput();
-  const month = input.baseline.month;
-  const saved = await db.getForecast(month);
+  const { today, firstDay, rows, history, baseline, recurring, budgets } = input;
+  const month = baseline.month;
+  // Kept until the month begins, so it can be checked against what was spent once the month is over.
+  await db.saveBaseline(month, baseline);
+  const daysBack = new Date(Date.parse(`${today}T00:00:00Z`) - 90 * 86_400_000).toISOString().slice(0, 10);
+  const [saved, past, byDay] = await Promise.all([db.getForecast(month), db.pastForecasts(month), db.dailyTotals(daysBack)]);
   const failed = lastError?.month === month && (!saved || lastError.at > saved.created_at) ? lastError : null;
   return {
-    today: input.today,
-    firstDay: input.firstDay,
-    history: input.history,
-    baseline: input.baseline,
-    recurring: input.recurring,
+    today,
+    firstDay,
+    history,
+    baseline,
+    recurring,
+    accuracy: forecastAccuracy({ rows, firstDay, history, baselines: past.baselines, ai: past.ai }),
+    daily: dailyPlan({ month, budget: budgets.total, forecast: saved?.result ?? baseline, recurring, byDay, firstDay, today }),
     ai: {
       configured: aiConfigured(),
       status: running?.month === month ? 'running' : failed ? 'error' : saved ? 'ready' : 'none',

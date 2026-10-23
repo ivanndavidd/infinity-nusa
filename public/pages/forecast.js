@@ -1,7 +1,8 @@
-// Forecast: next month's expected spending, month by month history, per-category forecast, recurring payments, and
-// the AI's analysis and lifestyle advice. Shows the statistical forecast until the AI (DeepSeek) has answered.
+// Forecast: next month's expected spending, month by month history, a daily spending limit, per-category forecast,
+// recurring payments, the AI's analysis and lifestyle advice, and how past forecasts compared with what was spent.
+// Shows the statistical forecast until the AI (DeepSeek) has answered.
 import { catName, dayCount, getLang, t } from '../i18n.js';
-import { api, dayLabel, el, money, monthLabel, motion, shortMonthLabel, stagger, svg, timeAgo } from '../lib.js';
+import { api, compactMoney, dayLabel, el, icon, money, monthLabel, motion, shortMonthLabel, stagger, svg, timeAgo } from '../lib.js';
 import { categoryIcon, emptyNote, outlineButton, pageHead, pill, tile, tileHead, withTooltip } from './ui.js';
 
 let data = null; // the last GET /api/forecast answer
@@ -184,6 +185,96 @@ function lifestyleTile(d) {
   return tile('t-fc-life', tileHead(t('fcLifestyleTitle')), ...body);
 }
 
+/** Next month's daily limit: the target less recurring payments, per day, split into weekdays and weekends. */
+function dailyTile(m, d) {
+  const p = d.daily;
+  const perDay = (amount) => t('fcPerDay', { amount: money(amount) });
+  const figure = el('div', { class: 'hero-figure' });
+  m.number(figure, p.perDay, money);
+  const how = t(p.fixed ? 'fcDailyHow' : 'fcDailyHowNoFixed', {
+    source: t(p.source === 'budget' ? 'fcSourceBudget' : 'fcSourceForecast'), target: money(p.target), fixed: money(p.fixed), days: p.days,
+  });
+  // A budget can ask for less (or allow more) than the forecast says the days usually cost.
+  const gap = p.source === 'budget' ? p.forecastPerDay - p.perDay : 0;
+  const tip = inLang(d.ai.result?.dailyTip);
+  return tile('t-fc-daily',
+    el('div', { class: 'caption-row' }, el('span', { text: t('fcDailyTitle') }), el('span', { text: monthLabel(p.month) })),
+    el('div', { class: 'fc-daily-figure' }, figure, el('span', { class: 'fc-per', text: t('fcPerDayUnit') })),
+    p.perDay <= 0 ? el('p', { class: 'small is-danger', text: t('fcDailyNone') }) : null,
+    p.perDay > 0 && p.weekday !== p.weekend
+      ? el('div', { class: 'fc-split' },
+          el('div', {}, el('span', { class: 'muted small', text: t('fcWeekday') }), el('span', { class: 'strong', text: perDay(p.weekday) })),
+          el('div', {}, el('span', { class: 'muted small', text: t('fcWeekend', { n: p.weekendDays }) }), el('span', { class: 'strong', text: perDay(p.weekend) })))
+      : null,
+    el('p', { class: 'muted small fc-how', text: how }),
+    Math.abs(gap) >= 1000 ? el('div', { class: 'fc-pills' }, pill(t(gap > 0 ? 'fcDailyTighter' : 'fcDailyRoomy', { amount: perDay(Math.abs(gap)) }), gap > 0 ? 'warn' : 'good')) : null,
+    p.categories.length && p.perDay > 0
+      ? el('div', { class: 'fc-daily-cats' }, ...p.categories.map((c) => el('div', { class: 'fc-recur' },
+          categoryIcon(c.category),
+          el('span', { class: 'strong ellipsis', text: catName(c.category) }),
+          el('span', { class: 'num strong', text: perDay(c.perDay) }))))
+      : null,
+    tip ? el('p', { class: 'fc-daily-tip' }, icon('sparkles', 14, 2), el('span', { text: tip })) : null);
+}
+
+/** How far a forecast was from what was spent, as a signed share of the actual amount. */
+const missOf = (forecast, actual) => (actual > 0 ? (forecast - actual) / actual : null);
+const shortMoney = (n) => `Rp${compactMoney(n)}`;
+
+function missCell(f, actual, closer) {
+  if (!f) return el('span', { class: 'num faint', text: '—' });
+  const miss = missOf(f.total, actual);
+  const pct = Math.round(miss * 100);
+  const size = Math.abs(pct);
+  const inRange = actual >= f.low && actual <= f.high;
+  const cell = el('span', { class: 'num fc-miss' },
+    el('span', { class: 'fc-miss-amount' },
+      closer ? el('span', { class: 'fc-closer', title: t('fcAccCloser') }, icon('check', 13, 3)) : null,
+      el('span', { class: 'strong', text: `${shortMoney(f.total)}${f.backtest ? '*' : ''}` })),
+    pill(`${pct > 0 ? '+' : ''}${pct}%`, size <= 10 ? 'good' : size <= 25 ? 'warn' : 'danger'));
+  return withTooltip(cell, money(f.total), `${t('fcRangeShort', { low: money(f.low), high: money(f.high) })} · ${t(inRange ? 'fcAccInRange' : 'fcAccOutRange')}`);
+}
+
+/** Each month that is over, against the forecasts made before it began: which came closer, statistics or the AI. */
+function accuracyTile(d) {
+  const entries = d.accuracy;
+  const current = d.history.find((h) => h.isCurrent)?.month ?? d.baseline.month;
+  const head = el('div', { class: 'fc-acc-row fc-head' },
+    el('span', { text: t('fcColMonth') }), el('span', { class: 'num', text: t('fcColActual') }),
+    el('span', { class: 'num', text: t('fcColStats') }), el('span', { class: 'num', text: t('fcColAi') }));
+  let statsWins = 0;
+  let aiWins = 0;
+  const statsMiss = [];
+  const aiMiss = [];
+  const rows = entries.map((e) => {
+    const s = e.stats ? Math.abs(missOf(e.stats.total, e.actual)) : null;
+    const a = e.ai ? Math.abs(missOf(e.ai.total, e.actual)) : null;
+    if (s !== null) statsMiss.push(s);
+    if (a !== null) aiMiss.push(a);
+    const both = s !== null && a !== null;
+    if (both && s < a) statsWins++;
+    if (both && a < s) aiWins++;
+    return el('div', { class: 'fc-acc-row' },
+      el('span', { class: 'strong', text: monthLabel(e.month) }),
+      el('span', { class: 'num strong', text: shortMoney(e.actual) }),
+      missCell(e.stats, e.actual, both && s < a),
+      missCell(e.ai, e.actual, both && a < s));
+  });
+  const avg = (list) => `${Math.round((list.reduce((x, v) => x + v, 0) / list.length) * 100)}%`;
+  const notes = [];
+  if (statsWins + aiWins) notes.push(t('fcAccVerdict', { n: statsWins + aiWins, s: statsWins, a: aiWins }));
+  if (statsMiss.length && aiMiss.length) notes.push(t('fcAccAvgMiss', { s: avg(statsMiss), a: avg(aiMiss) }));
+  else if (statsMiss.length) notes.push(t('fcAccAvgMissStats', { s: avg(statsMiss) }));
+  if (!aiMiss.length) notes.push(t('fcAccAiFirst', { month: monthLabel(d.baseline.month) }));
+  return tile('t-wide t-table t-fc-acc',
+    tileHead(t('fcAccTitle')),
+    el('span', { class: 'muted small fc-sub', text: t('fcAccSub') }),
+    ...(entries.length
+      ? [head, ...rows, el('p', { class: 'fc-acc-note small', text: notes.join(' ') }),
+          entries.some((e) => e.stats?.backtest) ? el('p', { class: 'faint small', text: t('fcAccBacktest') }) : null]
+      : [el('p', { class: 'muted small fc-acc-note', text: t('fcAccNone', { month: monthLabel(current) }) })]));
+}
+
 function categoryTable(d) {
   const f = shown(d);
   const average = new Map(d.baseline.categories.map((c) => [c.category, c.average]));
@@ -231,7 +322,10 @@ export function render(root, ctx, { animate }) {
   }
   const m = motion(animate);
   const complete = data.history.filter((h) => h.complete).length;
-  const tiles = [heroTile(ctx, m, data), chartTile(m, data), aiTile(data), lifestyleTile(data), categoryTable(data), recurringTile(data)];
+  const tiles = [
+    heroTile(ctx, m, data), chartTile(m, data), dailyTile(m, data), aiTile(data), lifestyleTile(data), recurringTile(data),
+    accuracyTile(data), categoryTable(data),
+  ];
   stagger(tiles);
   root.replaceChildren(...[
     head,

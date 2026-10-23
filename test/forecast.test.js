@@ -2,7 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  baselineForecast, forecastMessages, monthlyHistory, parseModelJson, recurringPayments, sanitizeForecast, topMerchants,
+  baselineForecast, dailyPlan, forecastAccuracy, forecastMessages, monthlyHistory, parseModelJson, recurringPayments, sanitizeForecast,
+  topMerchants,
 } from '../src/forecast-model.js';
 
 const TODAY = '2026-10-23';
@@ -123,6 +124,67 @@ test('forecastMessages asks for json and sends only the summarised data', () => 
   assert.equal(data.target_month, '2026-11');
   assert.equal(data.months.length, 4);
   assert.equal(data.monthly_budget, 5_000_000);
+});
+
+test('forecastAccuracy uses the stored forecasts and works out the missing statistical ones', () => {
+  const history = monthlyHistory(ROWS, '2026-07-23', TODAY);
+  const entries = forecastAccuracy({
+    rows: ROWS,
+    firstDay: '2026-07-23',
+    history,
+    baselines: { '2026-09': { total: 3_500_000, low: 3_000_000, high: 4_000_000 } },
+    ai: { '2026-09': { total: 3_700_000, low: 3_200_000, high: 4_100_000 }, '2026-10': { total: 1, low: 1, high: 1 } },
+  });
+  // October is still running, so it isn't judged yet. August is left out: only nine days of July existed before it.
+  assert.deepEqual(entries, [
+    {
+      month: '2026-09',
+      actual: 3_600_000,
+      stats: { total: 3_500_000, low: 3_000_000, high: 4_000_000, backtest: false },
+      ai: { total: 3_700_000, low: 3_200_000, high: 4_100_000 },
+    },
+  ]);
+  // With all of July, both are worked out from it, newest first: August's from July's daily rate (July was still running),
+  // September's from July as a complete month (August was still running).
+  const fromJuly = forecastAccuracy({ rows: ROWS, firstDay: '2026-07-01', history: monthlyHistory(ROWS, '2026-07-01', TODAY) });
+  assert.deepEqual(fromJuly, [
+    { month: '2026-09', actual: 3_600_000, stats: { total: 900_000, low: 720_000, high: 1_080_000, backtest: true }, ai: null },
+    { month: '2026-08', actual: 4_000_000, stats: { total: 900_000, low: 720_000, high: 1_080_000, backtest: true }, ai: null },
+  ]);
+});
+
+test('dailyPlan spreads what is left after recurring payments over the days, weekends their own share', () => {
+  // Weekends cost twice a weekday over the last 90 days.
+  const byDay = Array.from({ length: 90 }, (_, i) => {
+    const day = new Date(Date.parse(`${TODAY}T00:00:00Z`) - (i + 1) * 86_400_000).toISOString().slice(0, 10);
+    return { day, total: [0, 6].includes(new Date(`${day}T00:00:00Z`).getUTCDay()) ? 200_000 : 100_000 };
+  });
+  const forecast = {
+    total: 6_000_000,
+    categories: [
+      { category: 'Food & Drinks', amount: 3_000_000 },
+      { category: 'Bills & Utilities', amount: 1_000_000 },
+      { category: 'Transport', amount: 900_000 },
+    ],
+  };
+  const recurring = [{ amount: 600_000 }];
+  const plan = dailyPlan({ month: '2026-11', budget: null, forecast, recurring, byDay, firstDay: '2026-07-23', today: TODAY });
+  assert.equal(plan.source, 'forecast');
+  assert.equal(plan.fixed, 600_000);
+  assert.equal(plan.perDay, 180_000); // (6.0M - 0.6M) / 30
+  assert.equal(plan.weekendDays, 9); // November 2026 starts on a Sunday
+  assert.equal(plan.weekday, 138_000); // 5.4M / (21 + 9 x 2)
+  assert.equal(plan.weekend, 277_000);
+  // Bills aren't day-to-day spending.
+  assert.deepEqual(plan.categories, [{ category: 'Food & Drinks', perDay: 100_000 }, { category: 'Transport', perDay: 30_000 }]);
+
+  // A budget below the forecast sets the target, and the categories shrink with it.
+  const tight = dailyPlan({ month: '2026-11', budget: 3_600_000, forecast, recurring, byDay: [], firstDay: '2026-07-23', today: TODAY });
+  assert.equal(tight.source, 'budget');
+  assert.equal(tight.perDay, 100_000);
+  assert.equal(tight.forecastPerDay, 180_000);
+  assert.equal(tight.weekday, tight.weekend); // no spending history: every day the same
+  assert.equal(tight.categories[0].perDay, 56_000); // 3.0M x (3.0M / 5.4M) / 30
 });
 
 test('parseModelJson reads plain and fenced JSON', () => {

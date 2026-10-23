@@ -116,6 +116,94 @@ export function baselineForecast(history, targetMonth) {
   };
 }
 
+const rangeOf = (f) => ({ total: f.total, low: f.low, high: f.high });
+const BACKTEST_MIN_DAYS = 28;
+
+/**
+ * How past forecasts compared with what was spent, newest first: one entry per complete month that had a forecast.
+ * The statistical forecast is the one stored before the month began; months from before those were stored get it
+ * worked out again from the data that existed then (marked as a backtest), but only once about a month of data existed:
+ * a guess from the first few days says little about the method. The AI's is the one stored, if any.
+ * baselines and ai: stored forecasts keyed by month.
+ */
+export function forecastAccuracy({ rows, firstDay, history, baselines = {}, ai = {} }) {
+  const entries = [];
+  for (const h of history) {
+    if (!h.complete) continue;
+    let stats = baselines[h.month] ? { ...rangeOf(baselines[h.month]), backtest: false } : null;
+    const lastDayBefore = lastDayOfMonth(shiftMonth(h.month, -1));
+    const before = !stats && firstDay && firstDay <= lastDayBefore ? monthlyHistory(rows, firstDay, lastDayBefore) : [];
+    if (before.reduce((a, m) => a + m.coveredDays, 0) >= BACKTEST_MIN_DAYS) {
+      const then = baselineForecast(before, h.month);
+      if (then.total > 0) stats = { ...rangeOf(then), backtest: true };
+    }
+    const aiThen = ai[h.month] ? rangeOf(ai[h.month]) : null;
+    if (stats || aiThen) entries.push({ month: h.month, actual: h.total, stats, ai: aiThen });
+  }
+  return entries.reverse();
+}
+
+// Categories that aren't day-to-day spending, so they get no daily share: bills, instalments, one-offs, money moves.
+const NOT_DAILY = new Set([
+  'Bills & Utilities', 'PayLater & Loans', 'Donations', 'Education', 'Travel', 'Transfer', 'Uncategorized', 'Cash',
+  'E-Wallet Top Up', 'Credit Card Bill', 'Income', 'Refund', 'Other',
+]);
+const isWeekend = (date) => [0, 6].includes(new Date(dateToUtc(date)).getUTCDay());
+const toThousand = (n) => Math.round(n / 1000) * 1000;
+
+/**
+ * A daily spending limit for the target month: the monthly target (the budget, or else the forecast) minus the
+ * recurring payments due anyway, spread over its days. When the history shows weekends cost more or less than
+ * weekdays (comparing the median day, so one-off buys don't skew it), each gets its own limit. Day-to-day categories
+ * get their share of the forecast, scaled down when the budget is tighter than the forecast.
+ * byDay: [{ day, total }] for recent days; forecast: { total, categories } (the AI's or the statistical one).
+ */
+export function dailyPlan({ month, budget, forecast, recurring, byDay, firstDay, today }) {
+  const days = Number(lastDayOfMonth(month).slice(8));
+  const target = budget || forecast.total;
+  const fixed = recurring.reduce((a, r) => a + r.amount, 0);
+  const flexible = Math.max(0, target - fixed);
+
+  // Median weekday and weekend day over the last 90 full days with data, quiet days included.
+  const spent = new Map(byDay.map((d) => [d.day, d.total]));
+  const weekday = [];
+  const weekend = [];
+  for (let i = 90; i >= 1; i--) {
+    const date = new Date(dateToUtc(today) - i * DAY_MS).toISOString().slice(0, 10);
+    if (firstDay && date < firstDay) continue;
+    (isWeekend(date) ? weekend : weekday).push(spent.get(date) ?? 0);
+  }
+  const ratio = weekend.length >= 4 && weekday.length >= 10 && median(weekday) > 0
+    ? Math.min(2.5, Math.max(0.5, median(weekend) / median(weekday)))
+    : 1;
+  let weekendDays = 0;
+  for (let d = 1; d <= days; d++) if (isWeekend(`${month}-${String(d).padStart(2, '0')}`)) weekendDays++;
+  const perWeekday = flexible / (days - weekendDays + weekendDays * ratio);
+
+  const forecastFlexible = Math.max(0, forecast.total - fixed);
+  const scale = forecastFlexible > 0 ? Math.min(1, flexible / forecastFlexible) : 1;
+  const categories = forecast.categories
+    .filter((c) => !NOT_DAILY.has(c.category) && c.amount > 0)
+    .slice(0, 4)
+    .map((c) => ({ category: c.category, perDay: toThousand((c.amount * scale) / days) }));
+
+  return {
+    month,
+    days,
+    source: budget ? 'budget' : 'forecast',
+    target,
+    fixed,
+    fixedCount: recurring.length,
+    perDay: toThousand(flexible / days),
+    weekday: toThousand(perWeekday),
+    weekend: toThousand(perWeekday * ratio),
+    weekendDays,
+    // What day-to-day spending would come to per day if the forecast came true.
+    forecastPerDay: toThousand(forecastFlexible / days),
+    categories,
+  };
+}
+
 /** The last three months, current one included: the window for recurring payments and top merchants. */
 const recentMonths = (today) => [shiftMonth(today.slice(0, 7), -2), shiftMonth(today.slice(0, 7), -1), today.slice(0, 7)];
 
@@ -189,10 +277,12 @@ Reply with json only, in exactly this shape:
  "summary": {"en": "", "id": ""},
  "insights": {"en": [""], "id": [""]},
  "lifestyle": {"en": "", "id": ""},
- "advice": [{"category": "Food & Drinks", "title": {"en": "", "id": ""}, "detail": {"en": "", "id": ""}, "monthly_saving": 0}]}
+ "advice": [{"category": "Food & Drinks", "title": {"en": "", "id": ""}, "detail": {"en": "", "id": ""}, "monthly_saving": 0}],
+ "daily_tip": {"en": "", "id": ""}}
 "summary" is 2-3 sentences on the expected total and its main drivers. "insights" are 2-5 short observations on what drives the change and what to watch.
 "lifestyle" is 2-3 sentences describing the lifestyle this spending suggests (for example often eating out, frequent online shopping, ride-hailing to commute) and the direction that would make the money go further.
-"advice" is 3-5 concrete habit changes grounded in their own categories and merchants. "title" is under 8 words, "detail" under 40 words and says what to do in practice, "category" is the category it is about (or null), and "monthly_saving" is a realistic estimate in rupiah of what it would save per month (0 when it is not about saving).`;
+"advice" is 3-5 concrete habit changes grounded in their own categories and merchants. "title" is under 8 words, "detail" under 40 words and says what to do in practice, "category" is the category it is about (or null), and "monthly_saving" is a realistic estimate in rupiah of what it would save per month (0 when it is not about saving).
+"daily_tip" is 1-2 sentences on keeping day-to-day spending steady through the target month: which days, habits or merchants usually push a day over, and what to do instead.`;
 
 /** The chat messages asking the model for a forecast. Only monthly totals and merchant names are included. */
 export function forecastMessages({ today, history, baseline, recurring, merchants, budgets }) {
@@ -298,6 +388,7 @@ export function sanitizeForecast(raw, { history, baseline }) {
     insights: { en: textList(raw.insights?.en, 240, 5), id: textList(raw.insights?.id, 240, 5) },
     lifestyle: bothLangs(raw.lifestyle, 600),
     advice,
+    dailyTip: bothLangs(raw.daily_tip, 320),
   };
 }
 

@@ -865,11 +865,11 @@ main { padding-top: 18px; padding-bottom: 48px; }
 
 .fc-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; }
 /* The figure scales with its tile, so a long amount stays on one line however narrow the tile gets. */
-.t-fc-hero { grid-column: span 5; padding: 26px 28px; container-type: inline-size; }
+.t-fc-hero, .t-fc-daily { grid-column: span 5; padding: 26px 28px; container-type: inline-size; }
 .t-fc-hero .hero-figure { font-size: min(56px, 12.5cqi); }
-.t-fc-chart { grid-column: span 7; }
-.t-fc-ai, .t-fc-life { grid-column: span 6; }
-.fc-grid > .t-wide, .t-fc-recur { grid-column: span 12; }
+.t-fc-chart, .t-fc-ai, .t-fc-life { grid-column: span 7; }
+.t-fc-recur { grid-column: span 5; }
+.fc-grid > .t-wide { grid-column: span 12; }
 .fc-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .fc-source { margin-top: auto; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
 .fc-source.is-running { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text-2); }
@@ -920,8 +920,34 @@ main { padding-top: 18px; padding-bottom: 48px; }
 .fc-cat-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; line-height: 1.4; }
 .fc-amount { display: flex; flex-direction: column; align-items: flex-end; }
 .t-fc-recur { gap: 0; }
-.t-fc-recur .fc-sub { padding: 2px 0 8px; }
+.t-fc-recur .fc-sub, .t-fc-acc .fc-sub { padding: 2px 0 8px; }
 .fc-recur { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--divider); }
+
+.t-fc-daily .hero-figure { font-size: min(48px, 11cqi); }
+.fc-daily-figure { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+.fc-per { font-size: 15px; font-weight: 600; color: var(--muted); }
+.fc-split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fc-split > div { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--sunken); font-variant-numeric: tabular-nums; }
+.fc-how { line-height: 1.5; }
+.fc-daily-cats .fc-recur { padding: 8px 0; }
+.fc-daily-tip { display: flex; align-items: flex-start; gap: 8px; margin-top: auto; font-size: 13.5px; line-height: 1.5; color: var(--text-2); text-wrap: pretty; }
+.fc-daily-tip svg { flex: none; margin-top: 3px; color: var(--pink-text); }
+
+.fc-acc-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) 1fr 1.3fr 1.3fr;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--divider);
+  font-size: 14px;
+}
+.fc-acc-row > .num { justify-self: end; text-align: right; }
+.fc-miss { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px 8px; }
+.fc-miss-amount { display: inline-flex; align-items: center; gap: 4px; }
+.fc-closer { display: inline-flex; color: var(--good); }
+.fc-acc-note { padding: 12px 0 4px; border-top: 1px solid var(--divider); line-height: 1.5; color: var(--text-2); }
+.fc-acc-note + .faint { padding-bottom: 6px; }
 
 /* ---------- email sync ---------- */
 
@@ -1193,7 +1219,7 @@ main { padding-top: 18px; padding-bottom: 48px; }
   main { padding-bottom: 100px; }
   .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .three-grid { grid-template-columns: 1fr; }
-  .t-fc-hero, .t-fc-chart, .t-fc-ai, .t-fc-life { grid-column: span 12; }
+  .t-fc-hero, .t-fc-chart, .t-fc-daily, .t-fc-ai, .t-fc-life, .t-fc-recur { grid-column: span 12; }
 }
 
 /* ---------- phone ---------- */
@@ -1275,8 +1301,10 @@ main { padding-top: 18px; padding-bottom: 48px; }
   .t-table { padding: 8px 16px; }
   .budget-head { display: none; }
   .fc-grid { gap: 12px; }
-  .t-fc-hero { padding: 22px 20px; }
+  .t-fc-hero, .t-fc-daily { padding: 22px 20px; }
   .fc-row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; }
+  .fc-acc-row { grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 12px; font-size: 13px; }
+  .fc-miss { flex-direction: column; align-items: flex-end; }
   .fc-row > :nth-child(2), .fc-amount .per-month { display: none; }
   .budget-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 8px; }
   .budget-row > :nth-child(2), .budget-row > :nth-child(4) { display: none; }

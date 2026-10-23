@@ -89,6 +89,13 @@ CREATE TABLE IF NOT EXISTS forecasts (
   result      JSONB NOT NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- The statistical forecast for each month, kept up to date until the month begins, to compare with the actual spend.
+CREATE TABLE IF NOT EXISTS forecast_baselines (
+  month       TEXT PRIMARY KEY,
+  result      JSONB NOT NULL,
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 export async function migrate() {
@@ -437,6 +444,17 @@ export async function monthlyMerchantTotals(since) {
   return rows;
 }
 
+/** Spending per day ('YYYY-MM-DD') since a date. Days without spending are left out. */
+export async function dailyTotals(since) {
+  const { rows } = await pool.query(
+    `SELECT to_char(occurred_at AT TIME ZONE $1, 'YYYY-MM-DD') AS day, sum(amount) AS total
+     FROM transactions WHERE ${SPENDING} AND occurred_at >= ($2::date::timestamp AT TIME ZONE $1)
+     GROUP BY 1`,
+    [config.timezone, since],
+  );
+  return rows;
+}
+
 /** The first day the mailbox has emails for ('YYYY-MM-DD'): the history starts there, not on the 1st. */
 export async function firstDataDay() {
   const { rows } = await pool.query(`SELECT to_char(min(received_at AT TIME ZONE $1), 'YYYY-MM-DD') AS day FROM emails`, [config.timezone]);
@@ -454,6 +472,24 @@ export async function saveForecast(month, model, result) {
      ON CONFLICT (month) DO UPDATE SET model = $2, result = $3, created_at = now()`,
     [month, model, JSON.stringify(result)],
   );
+}
+
+export async function saveBaseline(month, result) {
+  await pool.query(
+    `INSERT INTO forecast_baselines (month, result) VALUES ($1, $2)
+     ON CONFLICT (month) DO UPDATE SET result = $2, updated_at = now()`,
+    [month, JSON.stringify(result)],
+  );
+}
+
+/** The statistical and AI forecasts stored for months before `month`, as { baselines, ai } keyed by month. */
+export async function pastForecasts(month) {
+  const [baselines, ai] = await Promise.all([
+    pool.query('SELECT month, result FROM forecast_baselines WHERE month < $1', [month]),
+    pool.query('SELECT month, result FROM forecasts WHERE month < $1', [month]),
+  ]);
+  const byMonth = (rows) => Object.fromEntries(rows.map((r) => [r.month, r.result]));
+  return { baselines: byMonth(baselines.rows), ai: byMonth(ai.rows) };
 }
 
 // ---------- review queue ----------

@@ -66,6 +66,9 @@ Create a database (`CREATE DATABASE spending;`), copy `.env.example` to `.env`, 
   complete months, plus the payments that recur every month. With `DEEPSEEK_API_KEY` in `.env`, DeepSeek refines the
   forecast, explains it, and suggests lifestyle changes. It runs once a month on its own (or on **Refresh forecast**)
   and the answer is stored. A run is roughly 3k tokens in and 10k out (thinking included), about US$0.01.
+  The tab also gives a **daily limit** for next month (your budget, or else the forecast, minus recurring payments,
+  split into weekdays and weekends from your own pattern), and once a month is over, **forecast vs actual** shows
+  whether the statistics or the AI came closer.
 
 ## Keeping it running
 
