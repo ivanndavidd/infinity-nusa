@@ -55,7 +55,7 @@ const T = {
 
     navForecast: 'Forecast', fcMeta: 'Next month · {month}', fcExpected: 'Expected spending', fcRange: 'Likely between {low} and {high}',
     fcOverBudget: '{amount} over budget', fcUnderBudget: '{amount} under budget', fcVsAvg: '{pct} vs {n}-month average',
-    fcByAi: 'Analysed by {model} · {ago}.',fcAnalysing: 'AI is analysing your spending. This can take a minute.',
+    fcByAi: 'Analysed by {model} · {ago}.',fcAnalysing: 'AI is analysing your spending. This can take a few minutes.',
     fcUpdating: 'Updating the analysis. These numbers are from the one {ago} and change when it is done.',fcAnalysingShort: 'Analysing…',
     fcRefresh: 'Refresh forecast', fcStatOnly: 'Statistical forecast: {method}.', fcMethodWeighted: 'weighted average of {months}',
     fcMethodRunRate: 'daily spending so far, stretched to a full month',
@@ -147,7 +147,7 @@ const T = {
 
     navForecast: 'Perkiraan', fcMeta: 'Bulan depan · {month}', fcExpected: 'Perkiraan pengeluaran', fcRange: 'Kemungkinan antara {low} dan {high}',
     fcOverBudget: '{amount} di atas anggaran', fcUnderBudget: '{amount} di bawah anggaran', fcVsAvg: '{pct} dari rata-rata {n} bulan',
-    fcByAi: 'Dianalisis {model} · {ago}.',fcAnalysing: 'AI sedang menganalisis pengeluaranmu. Bisa sampai semenit.',
+    fcByAi: 'Dianalisis {model} · {ago}.',fcAnalysing: 'AI sedang menganalisis pengeluaranmu. Bisa sampai beberapa menit.',
     fcUpdating: 'Sedang memperbarui analisis. Angka ini dari analisis {ago}, dan berganti setelah selesai.',fcAnalysingShort: 'Menganalisis…',
     fcRefresh: 'Perbarui perkiraan', fcStatOnly: 'Perkiraan statistik: {method}.', fcMethodWeighted: 'rata-rata tertimbang {months}',
     fcMethodRunRate: 'pengeluaran harian sejauh ini, dihitung untuk sebulan penuh',

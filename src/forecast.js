@@ -9,7 +9,9 @@ import {
 } from './forecast-model.js';
 
 // Thinking mode can take a while; the page polls instead of waiting on one request (Cloudflare cuts those at 100 s).
-const REQUEST_TIMEOUT_MS = 240_000;
+const REQUEST_TIMEOUT_MS = 360_000;
+// max_tokens counts the thinking too, and a run has needed more than 16k, so leave room: only what is used is billed.
+const MAX_TOKENS = 32_000;
 
 let running = null; // { month } while DeepSeek is working
 let lastError = null; // { month, message, at } from the last failed run
@@ -118,13 +120,15 @@ async function askDeepSeek(messages) {
         response_format: { type: 'json_object' },
         thinking: { type: 'enabled' },
         reasoning_effort: 'high',
-        max_tokens: 16000,
+        max_tokens: MAX_TOKENS,
         stream: false,
       }),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (err) {
-    throw new Error(err.name === 'TimeoutError' ? 'DeepSeek did not answer within 4 minutes.' : `Could not reach DeepSeek (${err.cause?.code ?? err.message}).`);
+    throw new Error(err.name === 'TimeoutError'
+      ? `DeepSeek did not answer within ${REQUEST_TIMEOUT_MS / 60_000} minutes.`
+      : `Could not reach DeepSeek (${err.cause?.code ?? err.message}).`);
   }
   const body = await res.json().catch(() => null);
   if (!res.ok) {
@@ -133,8 +137,12 @@ async function askDeepSeek(messages) {
     }[res.status] ?? String(body?.error?.message ?? 'the request failed').slice(0, 200);
     throw new Error(`DeepSeek: ${reason} (HTTP ${res.status}).`);
   }
-  if (body?.usage) console.log(`[forecast] DeepSeek used ${body.usage.prompt_tokens} + ${body.usage.completion_tokens} tokens`);
-  const content = body?.choices?.[0]?.message?.content;
+  const choice = body?.choices?.[0];
+  if (body?.usage) {
+    const cut = choice?.finish_reason === 'length' ? ' (hit max_tokens)' : '';
+    console.log(`[forecast] DeepSeek used ${body.usage.prompt_tokens} + ${body.usage.completion_tokens} tokens${cut}`);
+  }
+  const content = choice?.message?.content;
   if (!content) throw Object.assign(new Error('DeepSeek returned an empty answer.'), { retry: true });
   return content;
 }
