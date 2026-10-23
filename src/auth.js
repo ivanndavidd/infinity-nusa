@@ -14,7 +14,7 @@ const SESSION_DAYS = 30;
 const LOGIN_TTL_MS = 10 * 60 * 1000;
 const MAX_PENDING_LOGINS = 50;
 const LOGIN_PAGE = fileURLToPath(new URL('../public/login.html', import.meta.url));
-const PUBLIC_PATHS = new Set(['/login.js', '/styles.css', '/fonts/PlusJakartaSans.ttf', '/favicon.svg', '/logo.svg']);
+const PUBLIC_PATHS = new Set(['/login.js', '/title-dot.js', '/styles.css', '/fonts/PlusJakartaSans.ttf', '/favicon.svg', '/logo.svg']);
 
 // Sign-ins in progress, keyed by OAuth state. Lost on restart, which only means clicking "Sign in" again.
 const pendingLogins = new Map();

@@ -5,6 +5,7 @@ import {
   shiftMonth, shortMonthLabel, dayLabel, todayIn, toast,
 } from './lib.js';
 import { dropdown } from './pages/ui.js';
+import { bounceTitleDot } from './title-dot.js';
 import * as overview from './pages/overview.js';
 import * as transactions from './pages/transactions.js';
 import * as categories from './pages/categories.js';
@@ -688,6 +689,7 @@ async function init() {
   applyStatic();
   renderLang();
   wire();
+  bounceTitleDot();
   try {
     await loadAccount();
     await Promise.all([refreshSync(), loadMonths()]);

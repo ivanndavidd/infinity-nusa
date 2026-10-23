@@ -1,4 +1,6 @@
 // Sign-in page copy (English / Bahasa Indonesia) and error messages from the Google callback.
+import { bounceTitleDot } from './title-dot.js';
+
 const STORAGE_KEY = 'spending-monitor.lang';
 
 const COPY = {
@@ -100,3 +102,4 @@ document.querySelector('#login-lang').addEventListener('click', () => {
 });
 
 apply();
+bounceTitleDot();
