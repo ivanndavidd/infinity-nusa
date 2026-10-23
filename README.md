@@ -65,7 +65,7 @@ Create a database (`CREATE DATABASE spending;`), copy `.env.example` to `.env`, 
 - **Forecast tab**: next month's expected spending per category, from a weighted average of the last three
   complete months, plus the payments that recur every month. With `DEEPSEEK_API_KEY` in `.env`, DeepSeek refines the
   forecast, explains it, and suggests lifestyle changes. It runs once a month on its own (or on **Refresh forecast**)
-  and the answer is stored, so each run costs well under a cent.
+  and the answer is stored. A run is roughly 3k tokens in and 10k out (thinking included), about US$0.01.
 
 ## Keeping it running
 
