@@ -59,7 +59,11 @@ const shown = (d) => d.ai.result ?? d.baseline;
 
 function sourceLine(d) {
   const { ai, baseline } = d;
-  if (ai.status === 'running') return el('p', { class: 'fc-source is-running' }, el('span', { class: 'live-dot' }), t('fcAnalysing'));
+  // On a refresh the previous answer stays on screen until the new one is in, so say where the numbers come from.
+  if (ai.status === 'running') {
+    return el('p', { class: 'fc-source is-running' }, el('span', { class: 'live-dot' }),
+      ai.result ? t('fcUpdating', { ago: timeAgo(ai.generatedAt) }) : t('fcAnalysing'));
+  }
   const lines = [];
   if (ai.result) lines.push(t('fcByAi', { model: ai.model, ago: timeAgo(ai.generatedAt) }));
   else {

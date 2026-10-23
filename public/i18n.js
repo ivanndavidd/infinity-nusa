@@ -55,7 +55,8 @@ const T = {
 
     navForecast: 'Forecast', fcMeta: 'Next month · {month}', fcExpected: 'Expected spending', fcRange: 'Likely between {low} and {high}',
     fcOverBudget: '{amount} over budget', fcUnderBudget: '{amount} under budget', fcVsAvg: '{pct} vs {n}-month average',
-    fcByAi: 'Analysed by {model} · {ago}.',fcAnalysing: 'AI is analysing your spending. This can take a minute.', fcAnalysingShort: 'Analysing…',
+    fcByAi: 'Analysed by {model} · {ago}.',fcAnalysing: 'AI is analysing your spending. This can take a minute.',
+    fcUpdating: 'Updating the analysis. These numbers are from the one {ago} and change when it is done.',fcAnalysingShort: 'Analysing…',
     fcRefresh: 'Refresh forecast', fcStatOnly: 'Statistical forecast: {method}.', fcMethodWeighted: 'weighted average of {months}',
     fcMethodRunRate: 'daily spending so far, stretched to a full month',
     fcAiOff: "Add DEEPSEEK_API_KEY to the server's .env for the AI analysis and lifestyle advice.", fcAiFailed: 'AI analysis failed: {error}',
@@ -146,7 +147,8 @@ const T = {
 
     navForecast: 'Perkiraan', fcMeta: 'Bulan depan · {month}', fcExpected: 'Perkiraan pengeluaran', fcRange: 'Kemungkinan antara {low} dan {high}',
     fcOverBudget: '{amount} di atas anggaran', fcUnderBudget: '{amount} di bawah anggaran', fcVsAvg: '{pct} dari rata-rata {n} bulan',
-    fcByAi: 'Dianalisis {model} · {ago}.',fcAnalysing: 'AI sedang menganalisis pengeluaranmu. Bisa sampai semenit.', fcAnalysingShort: 'Menganalisis…',
+    fcByAi: 'Dianalisis {model} · {ago}.',fcAnalysing: 'AI sedang menganalisis pengeluaranmu. Bisa sampai semenit.',
+    fcUpdating: 'Sedang memperbarui analisis. Angka ini dari analisis {ago}, dan berganti setelah selesai.',fcAnalysingShort: 'Menganalisis…',
     fcRefresh: 'Perbarui perkiraan', fcStatOnly: 'Perkiraan statistik: {method}.', fcMethodWeighted: 'rata-rata tertimbang {months}',
     fcMethodRunRate: 'pengeluaran harian sejauh ini, dihitung untuk sebulan penuh',
     fcAiOff: 'Tambahkan DEEPSEEK_API_KEY di .env server untuk analisis AI dan saran gaya hidup.', fcAiFailed: 'Analisis AI gagal: {error}',
