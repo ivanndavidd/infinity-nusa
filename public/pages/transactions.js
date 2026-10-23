@@ -1,5 +1,5 @@
 // Transactions: every transaction in the period, grouped by day, with source filters, search, sort and CSV export.
-import { catName, channelName, t } from '../i18n.js';
+import { catName, channelName, dayCount, t } from '../i18n.js';
 import { dayKeyIn, el, icon, money, motion, signedMoney, stagger, timeIn, weekdayDayLabel, debounce } from '../lib.js';
 import { categoryChip, dropdown, emptyNote, outlineButton, pageHead, tile, txTitle } from './ui.js';
 
@@ -206,8 +206,14 @@ export function render(root, ctx, { animate }) {
   m.number(avg, s.debit_count ? s.spent / s.debit_count : 0, money);
   const uncategorized = el('span', { class: 'stat-num is-pink' });
   m.count(uncategorized, state.review.length);
+  // Per day over the days gone so far (all of them for a past period), quiet days included.
+  const perDay = info.elapsedDays > 0
+    ? el('span', { class: 'stat-sub' },
+        el('span', { class: 'strong', text: t('fcPerDay', { amount: money(s.spent / info.elapsedDays) }) }), ' ',
+        el('span', { class: 'muted', text: t('avgOverDays', { days: dayCount(info.elapsedDays) }) }))
+    : null;
   const stats = [
-    tile('t-stat', el('span', { class: 'stat-label', text: t(info.isMonth && info.isCurrent ? 'spentThisMonth' : 'spentInPeriod') }), spent),
+    tile('t-stat', el('span', { class: 'stat-label', text: t(info.isMonth && info.isCurrent ? 'spentThisMonth' : 'spentInPeriod') }), spent, perDay),
     tile('t-stat', el('span', { class: 'stat-label', text: t('spendingTxs') }), txCount),
     tile('t-stat', el('span', { class: 'stat-label', text: t('avgTx') }), avg),
     el('button', { class: 'tile t-stat is-clickable', type: 'button', onclick: () => {
