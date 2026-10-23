@@ -26,7 +26,7 @@ const T = {
     msgRange: '{pct} of the budget for these {days} is used.', msgNoBudget: 'Set a monthly budget to see how much is left to spend.',
     msgFuture: 'Nothing spent yet in {month}.',
 
-    transactions: 'Transactions', searchPh: 'Search merchant or amount', exportCsv: 'Export CSV', allSources: 'All sources',
+    spendingTxs: 'Spending transactions', searchPh: 'Search merchant or amount', exportCsv: 'Export CSV', allSources: 'All sources',
     avgTx: 'Avg per transaction', uncategorized: 'Uncategorized', sortNewest: 'Newest first', sortOldest: 'Oldest first',
     sortLargest: 'Largest first', sortSmallest: 'Smallest first', sortBy: 'Sort',
     hide: 'Hide', unhide: 'Unhide', hideTitle: 'Leave this out of the totals', unhideTitle: 'Count this transaction again',
@@ -118,7 +118,7 @@ const T = {
     msgRange: '{pct} anggaran untuk {days} ini sudah terpakai.', msgNoBudget: 'Atur anggaran bulanan untuk melihat sisa yang bisa dibelanjakan.',
     msgFuture: 'Belum ada pengeluaran di {month}.',
 
-    transactions: 'Transaksi', searchPh: 'Cari merchant atau jumlah', exportCsv: 'Ekspor CSV', allSources: 'Semua sumber',
+    spendingTxs: 'Transaksi keluar', searchPh: 'Cari merchant atau jumlah', exportCsv: 'Ekspor CSV', allSources: 'Semua sumber',
     avgTx: 'Rata-rata per transaksi', uncategorized: 'Belum berkategori', sortNewest: 'Terbaru', sortOldest: 'Terlama',
     sortLargest: 'Terbesar', sortSmallest: 'Terkecil', sortBy: 'Urutkan',
     hide: 'Sembunyikan', unhide: 'Tampilkan', hideTitle: 'Jangan hitung di total', unhideTitle: 'Hitung lagi transaksi ini',

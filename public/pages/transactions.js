@@ -201,14 +201,14 @@ export function render(root, ctx, { animate }) {
   const spent = el('span', { class: 'stat-num' });
   m.number(spent, s.spent, money);
   const txCount = el('span', { class: 'stat-num' });
-  m.count(txCount, state.transactions.length);
+  m.count(txCount, s.debit_count); // the same spending the average is taken over
   const avg = el('span', { class: 'stat-num' });
   m.number(avg, s.debit_count ? s.spent / s.debit_count : 0, money);
   const uncategorized = el('span', { class: 'stat-num is-pink' });
   m.count(uncategorized, state.review.length);
   const stats = [
     tile('t-stat', el('span', { class: 'stat-label', text: t(info.isMonth && info.isCurrent ? 'spentThisMonth' : 'spentInPeriod') }), spent),
-    tile('t-stat', el('span', { class: 'stat-label', text: t('transactions') }), txCount),
+    tile('t-stat', el('span', { class: 'stat-label', text: t('spendingTxs') }), txCount),
     tile('t-stat', el('span', { class: 'stat-label', text: t('avgTx') }), avg),
     el('button', { class: 'tile t-stat is-clickable', type: 'button', onclick: () => {
       filter.category = 'Uncategorized';
