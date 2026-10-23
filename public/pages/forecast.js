@@ -156,7 +156,8 @@ function aiTile(d) {
   } else if (d.ai.status === 'running') {
     body = [skeleton(4)];
   } else {
-    body = [el('p', { class: 'muted small', text: d.ai.configured ? t('fcAiFailed', { error: d.ai.error ?? '—' }) : t('fcAiOff') })];
+    const note = !d.ai.configured ? t('fcAiOff') : d.ai.status === 'error' ? t('fcAiFailed', { error: d.ai.error }) : t('fcAdviceWaiting');
+    body = [el('p', { class: `small ${d.ai.status === 'error' ? 'is-danger' : 'muted'}`, text: note })];
   }
   return tile('t-fc-ai', tileHead(t('fcAiTitle')), ...body);
 }

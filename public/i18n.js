@@ -66,7 +66,7 @@ const T = {
     fcNoRecurring: 'None yet. A merchant shows up here once it is paid in 2 of the last 3 months.',
     fcNoData: 'No spending recorded yet, so there is nothing to forecast.', fcThinData: 'Only {n} complete month of data so far, so treat this as a rough guide. It gets better every month.',
     fcLifestyleTitle: 'Lifestyle advice', fcSaving: 'Save ~{amount}/mo', fcAdviceNote: 'General suggestions from your spending data, not professional financial advice.',
-    fcAdviceWaiting: 'Advice appears here once the AI analysis is done.',
+    fcAdviceWaiting: 'This appears once the AI analysis is done.',
 
     connected: 'Connected', syncFailed: 'Sync failed', syncOff: 'Sync off', permission: 'Access', imapReadOnly: 'IMAP · read-only',
     nextSync: 'Next sync', inTime: '{time}', syncEvery: 'Checks every {n}', readOnlyGmail: 'read-only',
@@ -144,7 +144,7 @@ const T = {
     fcNoRecurring: 'Belum ada. Merchant muncul di sini setelah dibayar di 2 dari 3 bulan terakhir.',
     fcNoData: 'Belum ada pengeluaran tercatat, jadi belum bisa diperkirakan.', fcThinData: 'Baru {n} bulan data lengkap, jadi anggap ini gambaran kasar. Makin akurat setiap bulan.',
     fcLifestyleTitle: 'Saran gaya hidup', fcSaving: 'Hemat ~{amount}/bln', fcAdviceNote: 'Saran umum dari data pengeluaranmu, bukan nasihat keuangan profesional.',
-    fcAdviceWaiting: 'Saran muncul di sini setelah analisis AI selesai.',
+    fcAdviceWaiting: 'Muncul di sini setelah analisis AI selesai.',
 
     connected: 'Terhubung', syncFailed: 'Sinkron gagal', syncOff: 'Sinkron mati', permission: 'Akses', imapReadOnly: 'IMAP · hanya-baca',
     nextSync: 'Sinkron berikutnya', inTime: '{time}', syncEvery: 'Cek setiap {n}', readOnlyGmail: 'hanya-baca',
